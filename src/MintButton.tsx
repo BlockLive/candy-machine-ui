@@ -171,7 +171,7 @@ export const MintButton = ({
   ) : (
     <CTAButton
       disabled={isMinting}
-      onClick={handleClickMint}
+      onClick={() => handleClickMint()}
       variant="contained"
     >
       {getMintButtonContent()}
