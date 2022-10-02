@@ -47,7 +47,6 @@ export function useMetaplex() {
       nfts
         ?.filter((nft) => nft !== undefined)
         .reduce((result, nft) => {
-            console.log(nft);
           const collectionMintId =
             nft?.collection?.address?.toString() as string;
           if (!result.includes(collectionMintId)) {

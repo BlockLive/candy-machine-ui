@@ -32,6 +32,7 @@ import { GatewayProvider } from "@civic/solana-gateway-react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useMetaplex } from "./metaplex";
 import { useParams } from "react-router-dom";
+
 const ConnectButton = styled(WalletDialogButton)`
   width: 100%;
   height: 60px;
