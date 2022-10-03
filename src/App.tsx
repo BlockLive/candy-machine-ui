@@ -28,15 +28,6 @@ const theme = createTheme({
   },
 });
 
-const getCandyMachineId = (): anchor.web3.PublicKey | undefined => {
-  try {
-    return new anchor.web3.PublicKey(process.env.REACT_APP_CANDY_MACHINE_ID!);
-  } catch (e) {
-    console.log("Failed to construct CandyMachineId", e);
-    return undefined;
-  }
-};
-
 let error: string | undefined = undefined;
 
 if (process.env.REACT_APP_SOLANA_NETWORK === undefined) {
@@ -47,7 +38,6 @@ if (process.env.REACT_APP_SOLANA_NETWORK === undefined) {
     "Your REACT_APP_SOLANA_RPC_HOST value in the .env file doesn't look right! Make sure you enter it in as a plain-text url (i.e., https://metaplex.devnet.rpcpool.com/)";
 }
 
-const candyMachineId = getCandyMachineId();
 const network = (process.env.REACT_APP_SOLANA_NETWORK ??
   "devnet") as WalletAdapterNetwork;
 const rpcHost =
@@ -73,25 +63,13 @@ const App = () => {
       <ConnectionProvider endpoint={endpoint}>
         <WalletProvider wallets={wallets} autoConnect>
           <WalletDialogProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" />
-                <Route
-                  path="/mint"
-                  element={
-                    <Home
-                      candyMachineId={candyMachineId}
-                      connection={connection}
-                      txTimeout={DEFAULT_TIMEOUT}
-                      rpcHost={rpcHost}
-                      network={network}
-                      error={error}
-                    />
-                  }
-                />
-                <Route path="/invite">INVITE GOES HERE </Route>
-              </Routes>
-            </BrowserRouter>
+            <Home
+              connection={connection}
+              txTimeout={DEFAULT_TIMEOUT}
+              rpcHost={rpcHost}
+              network={network}
+              error={error}
+            />
           </WalletDialogProvider>
         </WalletProvider>
       </ConnectionProvider>

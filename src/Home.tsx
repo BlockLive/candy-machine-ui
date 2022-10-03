@@ -31,6 +31,7 @@ import { MintButton } from "./MintButton";
 import { GatewayProvider } from "@civic/solana-gateway-react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useMetaplex } from "./metaplex";
+import { useParams } from "react-router-dom";
 
 const ConnectButton = styled(WalletDialogButton)`
   width: 100%;
@@ -46,7 +47,6 @@ const ConnectButton = styled(WalletDialogButton)`
 const MintContainer = styled.div``; // add your owns styles here
 
 export interface HomeProps {
-  candyMachineId?: anchor.web3.PublicKey;
   connection: anchor.web3.Connection;
   txTimeout: number;
   rpcHost: string;
@@ -55,6 +55,7 @@ export interface HomeProps {
 }
 
 const Home = (props: HomeProps) => {
+  const { candyMachineId } = useParams();
   const [isUserMinting, setIsUserMinting] = useState(false);
   const [candyMachine, setCandyMachine] = useState<CandyMachineAccount>();
   const [alertState, setAlertState] = useState<AlertState>({
@@ -92,6 +93,12 @@ const Home = (props: HomeProps) => {
     } as anchor.Wallet;
   }, [wallet]);
 
+  const candyMachinePublicKey = useMemo(() => {
+    return candyMachineId
+      ? new anchor.web3.PublicKey(candyMachineId)
+      : undefined;
+  }, [candyMachineId]);
+
   const refreshCandyMachineState = useCallback(
     async (commitment: Commitment = "confirmed") => {
       if (!anchorWallet) {
@@ -109,11 +116,11 @@ const Home = (props: HomeProps) => {
 
       const connection = new Connection(props.rpcHost, commitment);
 
-      if (props.candyMachineId) {
+      if (candyMachinePublicKey) {
         try {
           const cndy = await getCandyMachineState(
             anchorWallet,
-            props.candyMachineId,
+            candyMachinePublicKey,
             connection
           );
           console.log("Candy machine state: ", cndy);
@@ -232,7 +239,7 @@ const Home = (props: HomeProps) => {
             active = false;
           }
 
-          const [collectionPDA] = await getCollectionPDA(props.candyMachineId);
+          const [collectionPDA] = await getCollectionPDA(candyMachinePublicKey);
           const collectionPDAAccount = await connection.getAccountInfo(
             collectionPDA
           );
@@ -254,11 +261,11 @@ const Home = (props: HomeProps) => {
         } catch (e) {
           if (e instanceof Error) {
             if (
-              e.message === `Account does not exist ${props.candyMachineId}`
+              e.message === `Account does not exist ${candyMachinePublicKey}`
             ) {
               setAlertState({
                 open: true,
-                message: `Couldn't fetch candy machine state from candy machine with address: ${props.candyMachineId}, using rpc: ${props.rpcHost}! You probably typed the REACT_APP_CANDY_MACHINE_ID value in wrong in your .env file, or you are using the wrong RPC!`,
+                message: `Couldn't fetch candy machine state from candy machine with address: ${candyMachinePublicKey}, using rpc: ${props.rpcHost}! You probably typed the REACT_APP_CANDY_MACHINE_ID value in wrong in your .env file, or you are using the wrong RPC!`,
                 severity: "error",
                 hideDuration: null,
               });
@@ -291,7 +298,7 @@ const Home = (props: HomeProps) => {
         });
       }
     },
-    [anchorWallet, props.candyMachineId, props.error, props.rpcHost]
+    [anchorWallet, candyMachinePublicKey, props.error, props.rpcHost]
   );
 
   const onMint = async (
@@ -314,6 +321,7 @@ const Home = (props: HomeProps) => {
           );
           let status: any = { err: true };
           if (setupMint.transaction) {
+            console.log("HERE", setupMint.transaction);
             status = await awaitTransactionSignatureConfirmation(
               setupMint.transaction,
               props.txTimeout,
@@ -467,7 +475,7 @@ const Home = (props: HomeProps) => {
     refreshCandyMachineState();
   }, [
     anchorWallet,
-    props.candyMachineId,
+    candyMachineId,
     props.connection,
     refreshCandyMachineState,
   ]);

@@ -2118,7 +2118,11 @@
     "@solana/web3.js" "^1.35.1"
     "bs58" "^4.0.1"
 
+<<<<<<< HEAD
+"@metaplex-foundation/mpl-token-metadata@^2.2.2", "@metaplex-foundation/mpl-token-metadata@^2.3.1":
+=======
 "@metaplex-foundation/mpl-token-metadata@^2.2.2":
+>>>>>>> main
   "integrity" "sha512-MKFi6yrr1MUwXTpFEhkAUrgScnyBFQsfH0/hq5NvID1UqkSOJQz3t4hf0q6Qm+c5PCUU2sfYm1rjP8UCVT6dDg=="
   "resolved" "https://registry.npmjs.org/@metaplex-foundation/mpl-token-metadata/-/mpl-token-metadata-2.3.1.tgz"
   "version" "2.3.1"

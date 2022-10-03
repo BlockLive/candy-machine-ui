@@ -1,7 +1,7 @@
 import { web3 } from "@project-serum/anchor";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { Metaplex, Nft } from "@metaplex-foundation/js";
+import { Metaplex } from "@metaplex-foundation/js";
 
 export function useMetaplex() {
   const wallet = useWallet();
@@ -12,7 +12,7 @@ export function useMetaplex() {
     if (wallet.publicKey === null || connection === null) {
       return;
     }
-    let accounts = (
+    const accounts = (
       await connection.getParsedTokenAccountsByOwner(wallet.publicKey, {
         programId: new web3.PublicKey(TOKEN_PROGRAM_ID),
       })
@@ -42,13 +42,13 @@ export function useMetaplex() {
   }
 
   async function findCollectionMintIdsByOwner() {
-    let nfts = await findNftByOwner();
+    const nfts = await findNftByOwner();
     return (
       nfts
         ?.filter((nft) => nft !== undefined)
         .reduce((result, nft) => {
-          // todo(gtihtina): figure out why key causes error even when it exists in response
-          const collectionMintId = nft?.collection?.key?.toString();
+          const collectionMintId =
+            nft?.collection?.address?.toString() as string;
           if (!result.includes(collectionMintId)) {
             result.push(collectionMintId);
           }
