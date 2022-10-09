@@ -17,8 +17,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletDialogButton } from "@solana/wallet-adapter-material-ui";
 import {
   awaitTransactionSignatureConfirmation,
-  CANDY_MACHINE_PROGRAM,
-  CandyMachineAccount,
+  CANDY_MACHINE_PROGRAM_ID,
   createAccountsForMint,
   getCandyMachineState,
   getCollectionPDA,
@@ -32,6 +31,10 @@ import { GatewayProvider } from "@civic/solana-gateway-react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useMetaplex } from "./metaplex";
 import { useParams } from "react-router-dom";
+import {
+  CandyMachineAccount,
+  collectionMintIDsAndTokenAddressPair,
+} from "./types";
 
 const ConnectButton = styled(WalletDialogButton)`
   width: 100%;
@@ -67,11 +70,14 @@ const Home = (props: HomeProps) => {
   const [endDate, setEndDate] = useState<Date>();
   const [itemsRemaining, setItemsRemaining] = useState<number>();
   const [isWhitelistUser, setIsWhitelistUser] = useState(false);
+  const [whitelistToken, setWhitelistToken] =
+    useState<collectionMintIDsAndTokenAddressPair>();
   const [isPresale, setIsPresale] = useState(false);
   const [isValidBalance, setIsValidBalance] = useState(false);
   const [needTxnSplit, setNeedTxnSplit] = useState(true);
   const [setupTxn, setSetupTxn] = useState<SetupState>();
-  const { findCollectionMintIdsByOwner } = useMetaplex();
+  const [mintedNft, setMintedNft] = useState<anchor.web3.PublicKey>();
+  const { findCollectionMintIDsAndTokenAddress, utilizeNft } = useMetaplex();
 
   const rpcUrl = props.rpcHost;
   const wallet = useWallet();
@@ -155,12 +161,19 @@ const Home = (props: HomeProps) => {
             }
 
             try {
-              const collectionMintId = await findCollectionMintIdsByOwner();
-              isWLUser = collectionMintId.includes(
-                cndy.state.whitelistMintSettings.mint.toBase58()
-              );
+              const mintAndAddressPairs =
+                await findCollectionMintIDsAndTokenAddress(
+                  cndy.state.whitelistMintSettings.mint.toBase58()
+                );
+
+              if (mintAndAddressPairs.length > 0) {
+                // has at least one whitelisted NFT
+                isWLUser = true;
+                // just use the first whitelist token
+                // todo(gtihtina): this has to be mintAndAddressPairs[1]??
+                setWhitelistToken(mintAndAddressPairs[0]);
+              }
               // only whitelist the user if the balance > 0
-              setIsWhitelistUser(isWLUser);
 
               if (cndy.state.isWhitelistOnly) {
                 active = isWLUser && (presale || active);
@@ -357,6 +370,7 @@ const Home = (props: HomeProps) => {
         const mintResult = await mintOneToken(
           candyMachine,
           wallet.publicKey,
+          whitelistToken,
           beforeTransactions,
           afterTransactions,
           setupMint ?? setupTxn
@@ -377,6 +391,7 @@ const Home = (props: HomeProps) => {
               mintResult.metadataKey,
               "processed"
             );
+          setMintedNft(mintResult.mintAddress);
           console.log("Metadata status: ", !!metadataStatus);
         }
 
@@ -593,7 +608,7 @@ const Home = (props: HomeProps) => {
                     wallet={{
                       publicKey:
                         wallet.publicKey ||
-                        new PublicKey(CANDY_MACHINE_PROGRAM),
+                        new PublicKey(CANDY_MACHINE_PROGRAM_ID),
                       //@ts-ignore
                       signTransaction: wallet.signTransaction,
                     }}
@@ -628,6 +643,15 @@ const Home = (props: HomeProps) => {
                   />
                 )}
               </MintContainer>
+
+              <button
+                disabled={mintedNft == undefined}
+                onClick={() => {
+                  mintedNft ? utilizeNft(mintedNft) : null;
+                }}
+              >
+                Utilize
+              </button>
             </>
           )}
         </Paper>
