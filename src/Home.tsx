@@ -334,6 +334,7 @@ const Home = (props: HomeProps) => {
           );
           let status: any = { err: true };
           if (setupMint.transaction) {
+            console.log("HERE", setupMint.transaction);
             status = await awaitTransactionSignatureConfirmation(
               setupMint.transaction,
               props.txTimeout,
