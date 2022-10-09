@@ -5,7 +5,6 @@ import Home from "./Home";
 import { DEFAULT_TIMEOUT } from "./connection";
 import { clusterApiUrl } from "@solana/web3.js";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
-import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
 import {
   getPhantomWallet,
   getSlopeWallet,

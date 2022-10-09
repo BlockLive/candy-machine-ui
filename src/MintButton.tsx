@@ -1,6 +1,5 @@
 import styled from "styled-components";
 import Button from "@material-ui/core/Button";
-import { CandyMachineAccount } from "./candy-machine";
 import { CircularProgress } from "@material-ui/core";
 import { GatewayStatus, useGateway } from "@civic/solana-gateway-react";
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -12,6 +11,7 @@ import {
   removeAccountChangeListener,
 } from "@identity.com/solana-gateway-ts";
 import { CIVIC_GATEKEEPER_NETWORK } from "./utils";
+import { CandyMachineAccount } from "./types";
 
 export const CTAButton = styled(Button)`
   width: 100%;
@@ -160,6 +160,7 @@ export const MintButton = ({
   const handleClickBuy = useCallback(async () => {
     console.log("Link to OpenSea");
   }, []);
+
   return !isActive ? (
     <CTAButton
       disabled={false}

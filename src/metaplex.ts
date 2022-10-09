@@ -1,17 +1,23 @@
 import { web3 } from "@project-serum/anchor";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { Metaplex } from "@metaplex-foundation/js";
+import { Metaplex, walletAdapterIdentity } from "@metaplex-foundation/js";
+import { collectionMintIDsAndTokenAddressPair } from "./types";
+import { useMemo } from "react";
 
 export function useMetaplex() {
   const wallet = useWallet();
   const { connection } = useConnection();
-  const metaplex = new Metaplex(connection);
-
+  const metaplex = useMemo(() => {
+    const metaplex = new Metaplex(connection);
+    metaplex.use(walletAdapterIdentity(wallet));
+    return metaplex;
+  }, [connection, wallet]);
   async function findNftByOwner() {
     if (wallet.publicKey === null || connection === null) {
       return;
     }
+    // todo(gtihtina): check if metaplex has get accounts
     const accounts = (
       await connection.getParsedTokenAccountsByOwner(wallet.publicKey, {
         programId: new web3.PublicKey(TOKEN_PROGRAM_ID),
@@ -41,20 +47,39 @@ export function useMetaplex() {
     );
   }
 
-  async function findCollectionMintIdsByOwner() {
-    const nfts = await findNftByOwner();
+  async function findCollectionMintIDsAndTokenAddress(
+    whiteListMintId: string
+  ): Promise<collectionMintIDsAndTokenAddressPair[]> {
+    const nfts = (await findNftByOwner())?.filter(
+      (nft) =>
+        nft !== undefined &&
+        (nft?.collection?.address?.toString() as string) == whiteListMintId
+    );
     return (
-      nfts
-        ?.filter((nft) => nft !== undefined)
-        .reduce((result, nft) => {
-          const collectionMintId =
-            nft?.collection?.address?.toString() as string;
-          if (!result.includes(collectionMintId)) {
-            result.push(collectionMintId);
-          }
-          return result;
-        }, [] as string[]) ?? []
+      nfts?.reduce((result, nft) => {
+        const collectionMintId = nft?.collection?.address?.toString() as string;
+        const pair: collectionMintIDsAndTokenAddressPair = {
+          collectionMint: collectionMintId,
+          nftMint: nft?.address.toBase58() as string,
+        };
+        result.push(pair);
+        return result;
+      }, [] as collectionMintIDsAndTokenAddressPair[]) ?? []
     );
   }
-  return { findCollectionMintIdsByOwner, findNftByOwner };
+
+  async function utilizeNft(
+    mintAddress: web3.PublicKey
+  ): Promise<string | undefined> {
+    try {
+      console.log(mintAddress.toBase58());
+      const { response } = await metaplex.nfts().use({ mintAddress }).run();
+      return response.signature;
+    } catch (err) {
+      console.log("Use failed. Err:", err);
+    }
+    return;
+  }
+
+  return { findCollectionMintIDsAndTokenAddress, findNftByOwner, utilizeNft };
 }
